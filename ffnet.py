@@ -20,13 +20,11 @@ class ffnet:
         return map(lambda x: x.output, self.layers[layer])
 
     def propagate(self,inp):
-        for l in range(len(self.layers)):
-            for p in range(len(self.layers[l])):
-                self.layers[l][p].propagate(inp)
-            inp=self.get_layer_output(l)
+        for index, layer in enumerate(self.layers):
+            for per in layer:
+                per.propagate(inp)
+            inp = self.get_layer_output(index)
         return inp
-
-
 
     def learn(self,opimal_out,alpha):
         for lx in range(len(self.layers)):
