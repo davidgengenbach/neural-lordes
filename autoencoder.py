@@ -84,17 +84,27 @@ class ffnet:
 autoencoder=ffnet(100,100,1,30)
 
 def target1(x):
-    #return np.power(x,1.1)
     return np.sin(x*8)*0.9
 
 def target2(x):
-    #return np.power(x,1.1)
     return np.tanh(x*8)*0.9
+
+def target3(x):
+    return np.tanh(-x*8)*0.9
+
+def target4(x):
+    return np.cos(x * 5) * 0.9
+
+def target5(x):
+    return x*0.1
 
 xrange=np.arange(0, 1, 0.01)
 input=[]
 input.append(target1(xrange))
 input.append(target2(xrange))
+input.append(target3(xrange))
+input.append(target4(xrange))
+input.append(target5(xrange))
 #print xrange
 
 #print input
@@ -104,9 +114,12 @@ def plotvec(res,c):
 
 plotvec(input[0],'blue')
 plotvec(input[1],'blue')
+plotvec(input[2],'blue')
+plotvec(input[3],'blue')
+plotvec(input[4],'blue')
 
 for cycle in range(100):
-    for inp in range(2):
+    for inp in range(5):
         print cycle
         out=np.array(autoencoder.propagate(input[inp]))
         plotvec(out,'green')
@@ -119,7 +132,9 @@ for cycle in range(100):
 
 plotvec(autoencoder.propagate(input[0]), 'red')
 plotvec(autoencoder.propagate(input[1]), 'red')
-
+plotvec(autoencoder.propagate(input[2]), 'red')
+plotvec(autoencoder.propagate(input[3]), 'red')
+plotvec(autoencoder.propagate(input[4]), 'red')
 
 plt.show()
 
