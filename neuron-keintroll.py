@@ -3,84 +3,100 @@ import numpy as np
 import random 
 
 
-class Perceptron:
-	def __init__(self, inpsize, id, activation_function):
-		self.weights = [random.uniform(-1, 1) for x in range(inpsize)]
-		self.bias = 0.0
-		self.id = id
-		self.inactive = False
-		self.activation_function = activation_function
 
-	def activationfunction_der(self, x):
-		#return 1 - np.tanh(x)*np.tanh(x)
-		h = 0.000000000001
-		return (self.activation_function(x+h) - self.activation_function(x))/h
+def setup_weights(layer_number, layer_size):
+	weights = np.random.rand(layer_number, layer_size)
+	return weights
 
-	def propagate(self, inp):
-		self.input = inp
+def apply_activation_fns(activation_function, input_data, weights):
+	return activation_function(np.dot(input_data, weights))
 
-		if self.id == True:
-			return inp[0]
+def delta_fn(derivative_activation_fn, input_data, weights, errors):
+	return derivative_activation_fn(np.dot(input_data, weights)) * errors
 
-		if self.inactive == True:
-			return 0
+def error_fn(actual_value, target_value):
+	return actual_value - target_value
 
-		return self.activation_function(inp) * self.weights[0] + self.bias
+def error_fn2(weights, deltas):
+	return np.dot(weights, deltas)
 
-	def learn(self, optimal_out, alpha, errorterm = None):
-
-		if errorterm == None:
-			errorterm = self.output - optimal_out
-			out_der = self.activationfunction_der(np.dot(self.input, self.weights) + self.bias)
-			self.delta = out_der * errorterm
-		else:
-			self.delta = errorterm
-
-		self.weights = self.weights + alpha * self.delta*np.transpose(self.input)
-		self.bias=self.bias + alpha * self.delta
+def learn_fn(derivative_activation_fn, deltas, input_data, weights):
+	alpha = 0.2
+	#return np.outer(deltas, input_data)
+	return weights - alpha * np.outer(input_data, deltas)
 
 
-	#np.tanh
-
-
-lin_cell = Perceptron(1, False, lambda x : x )
-quad_cell = Perceptron(1, False, lambda x : x*x )
+def sech(x):
+	return 1/np.cosh(x)**2
 
 
 
+def feed_forward(layer_list, training_data):
+	act_fn = np.tanh
+	act_fn_derived = sech
 
+
+	weight_list = []
+
+	for i in range(len(layer_list)-1):
+		weight_list.append(setup_weights(layer_list[i], layer_list[i+1]))
+
+
+	for i in range(len(training_data)):
+
+		input_data = training_data[i,0]
+		target_data = training_data[i,1]
+
+		results = []
+		results.append(input_data)
+		#results.append(apply_activation_fns(act_fn, results[0], weight_list[0]))
+		#results.append(apply_activation_fns(act_fn, results[1], weight_list[1]))
+
+		reductor = lambda x, y : x.append(apply_activation_fns(act_fn, x[len(x)-1], y))		
+
+		#reduce(reductor, weight_list, results)
+
+		for j in range(len(weight_list)):
+			reductor(results, weight_list[j])
+
+
+		for j in reversed(range(len(weight_list))):
+			if(j == len(weight_list) - 1):
+				error_term = error_fn(results[j+1], target_data)
+			else:
+				error_term = error_fn2(weight_list[j+1], last_deltas)				
+
+			last_deltas = delta_fn(sech, results[j], weight_list[j], error_term)
+			weight_list[j] = learn_fn(act_fn_derived, last_deltas, results[j], weight_list[j])
+			
+
+	return results[len(weight_list)]
+
+
+input_data = np.transpose(np.array([1]))
+
+training_data = np.tile(np.array([[1,2,3,4], 0.5]), (100, 1) )
+
+
+for i in range(len(training_data)):
+	training_data[i, 0] = training_data[i,0] + 0.2 * np.random.rand(4)
+
+
+print training_data
+
+
+result = feed_forward([4,3,2,1], training_data)
+
+print "result", result
+
+
+
+'''
 def linear_training_data(m, b):
 	for x in range (100):
-		yield (x/100.0, m*x/100.0 + b)
+		yield (x, m*x + b)
+
+data = list(linear_training_data(-1,1))
+'''
 
 
-def quad_training_data(a, b, c):
-	for x in range (100):
-		yield (x, a*x*x*1.0 + b*x*1.0 + c*1.0)
-
-
-data = list(quad_training_data(2, 0.0, 0))
-
-
-for bla in range(100):
-	for x,y in data:
-		#lin_cell.output = lin_cell.propagate([x])
-		quad_cell.output = quad_cell.propagate(x)
-
-		output = quad_cell.output #lin_cell.output + quad_cell.output 
-		print x, y, output
-
-		#lin_cell.learn(output, 0.2, y - output)
-		quad_cell.learn(output, 0.000002, y - output)
-
-
-
-print quad_cell.weights
-print quad_cell.bias
-
-#print abs_cell.weights
-
-
-
-#plt.scatter([1],[1])
-#plot.show()
