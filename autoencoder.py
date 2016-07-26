@@ -4,7 +4,7 @@ import random
 
 class Perceptron:
     def __init__(self, inpsize,id):
-        self.weights = [random.uniform(-0.01, 0.01) for x in range(inpsize)]
+        self.weights = [random.uniform(-0.05, 0.05) for x in range(inpsize)]
         self.bias=0
         self.id=id
         self.inactive=False
@@ -81,15 +81,20 @@ class ffnet:
                     perceptron.learn(None, alpha, trainoutp)
 
 
-autoencoder=ffnet(100,100,1,1)
+autoencoder=ffnet(100,100,1,30)
 
-def target(x):
+def target1(x):
     #return np.power(x,1.1)
     return np.sin(x*8)*0.9
 
+def target2(x):
+    #return np.power(x,1.1)
+    return np.tanh(x*8)*0.9
 
 xrange=np.arange(0, 1, 0.01)
-input=target(xrange)
+input=[]
+input.append(target1(xrange))
+input.append(target2(xrange))
 #print xrange
 
 #print input
@@ -97,24 +102,23 @@ input=target(xrange)
 def plotvec(res,c):
     plt.plot(xrange, res, color=c)
 
-plotvec(input,'blue')
+plotvec(input[0],'blue')
+plotvec(input[1],'blue')
 
 for cycle in range(100):
-    print cycle
-    out=np.array(autoencoder.propagate(input))
-    #print out
+    for inp in range(2):
+        print cycle
+        out=np.array(autoencoder.propagate(input[inp]))
+        plotvec(out,'green')
+        autoencoder.learn(input[inp],0.05)
 
-    plotvec(out,'green')
+        for p in range(len(autoencoder.layers[1])):
+            for w in range(len(autoencoder.layers[1][p].weights)):
+                autoencoder.layers[1][p].weights[w]=autoencoder.layers[0][w].weights[p]
 
-    autoencoder.learn(input,0.05)
 
-    for p in range(len(autoencoder.layers[1])):
-        for w in range(len(autoencoder.layers[1][p].weights)):
-            autoencoder.layers[1][p].weights[w]=autoencoder.layers[0][w].weights[p]
-
-out = autoencoder.propagate(input)
-plotvec(out, 'red')
-
+plotvec(autoencoder.propagate(input[0]), 'red')
+plotvec(autoencoder.propagate(input[1]), 'red')
 
 
 plt.show()
