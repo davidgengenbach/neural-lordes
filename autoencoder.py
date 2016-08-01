@@ -6,11 +6,12 @@ from activation_functions import ActivationFunctions
 from ffnet import ffnet
 import pylab
 from nn_printer import draw_ffnet
+import matplotlib.gridspec as gridspec
 
-
-LEARN_RATE = 0.05
+LEARN_RATE = 0.02
 
 INIT_AND_SAVE_WEIGHTS = True
+# Parameters for the ffnet
 # Only used when INIT_AND_SAVE_WEIGHTS is True
 # inpsize, outpsize, hiddenlayers, hiddenlayerheight
 NN_ARGUMENTS = [100, 100, 1, 30]
@@ -69,40 +70,42 @@ def plotvec(res,c = 'green'):
 def clear_plot():
     plt.clf()
     plt.cla()
+
 pylab.show()
 
-ax1 = plt.subplot2grid((3,3), (0,0), colspan=3)
-ax2 = plt.subplot2grid((3,3), (1,0), colspan=2)
+gs = gridspec.GridSpec(2, 1, width_ratios=[1], height_ratios=[1,1] )
+ax1 = plt.subplot(gs[0])
+ax2 = plt.subplot(gs[1])
 
 for cycle in range(100):
     if cycle % 10 == 0:
             print cycle
     for index, inp in enumerate(input):
-        out=np.array(autoencoder.propagate(inp))
+        out = np.array(autoencoder.propagate(inp))
 
         autoencoder.learn(inp, LEARN_RATE)
+
         for p in range(len(autoencoder.layers[1])):
             for w in range(len(autoencoder.layers[1][p].weights)):
                 autoencoder.layers[1][p].weights[w]=autoencoder.layers[0][w].weights[p]
 
         clear_plot()
-        plt.subplot(211)
+        plt.subplot(ax1)
         for inp in input:
             plotvec(inp,'blue')
             plotvec(autoencoder.propagate(inp), 'red')
-        plotvec(out,'green')
-        plt.text(0, 0, 'CurrentIterartion: {}'.format(cycle * len(input) + index))
-        plt.subplot(212)
-        draw_ffnet(autoencoder, show=False)
 
+        plotvec(out,'green')
+
+        plt.text(0, 0, 'CurrentIteration: {}'.format(cycle * len(input) + index))
+        plt.subplot(ax2)
+        draw_ffnet(autoencoder, show=False)
         pylab.draw()
         plt.pause(0.01)
 
 for inp in input:
     plotvec(inp,'blue')
     plotvec(autoencoder.propagate(inp), 'red')
-
-plt.show()
 
 '''
 #in_data=(1.0)
