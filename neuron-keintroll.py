@@ -31,10 +31,9 @@ def sech(x):
 
 
 
-def feed_forward(layer_list, training_data):
+def train_feed_forward(layer_list, training_data):
 	act_fn = np.tanh
 	act_fn_derived = sech
-
 
 	weight_list = []
 
@@ -49,17 +48,16 @@ def feed_forward(layer_list, training_data):
 
 		results = []
 		results.append(input_data)
-		#results.append(apply_activation_fns(act_fn, results[0], weight_list[0]))
-		#results.append(apply_activation_fns(act_fn, results[1], weight_list[1]))
 
 		reductor = lambda x, y : x.append(apply_activation_fns(act_fn, x[len(x)-1], y))		
 
 		#reduce(reductor, weight_list, results)
 
+		#feed input forward
 		for j in range(len(weight_list)):
 			reductor(results, weight_list[j])
 
-
+		#propagate error backwards
 		for j in reversed(range(len(weight_list))):
 			if(j == len(weight_list) - 1):
 				error_term = error_fn(results[j+1], target_data)
@@ -69,23 +67,58 @@ def feed_forward(layer_list, training_data):
 			last_deltas = delta_fn(sech, results[j], weight_list[j], error_term)
 			weight_list[j] = learn_fn(act_fn_derived, last_deltas, results[j], weight_list[j])
 			
-
-	return results[len(weight_list)]
-
-
-input_data = np.transpose(np.array([1]))
-
-training_data = np.tile(np.array([[1,2,3,4], 0.5]), (100, 1) )
+	# return the trained weights
+	return weight_list
 
 
-for i in range(len(training_data)):
-	training_data[i, 0] = training_data[i,0] + 0.2 * np.random.rand(4)
+def apply_network(weights, input):
+	act_fn = np.tanh
+	act_fn_derived = sech
+
+	results = []
+	results.append(input)
+
+	reductor = lambda x, y : x.append(apply_activation_fns(act_fn, x[len(x)-1], y))		
+
+	#reduce(reductor, weight_list, results)
+
+	#feed input forward
+	for j in range(len(weights)):
+		reductor(results, weights[j])
+
+	return results[len(results)-1]
 
 
-print training_data
 
 
-result = feed_forward([4,3,2,1], training_data)
+
+def absolute_training_data():
+	training_data = np.tile(np.array([[1,2,3,4], 0.5]), (100, 1) )
+
+	# add random noise
+	for i in range(len(training_data)):
+		training_data[i, 0] = training_data[i,0] + 0.2 * np.random.rand(4)
+
+	return training_data
+
+
+
+# sinusoidal training data
+sin_data = np.array([[[x], np.sin(x)] for x in np.arange(-3.14, 3.14, 0.1)])
+
+
+training_data = sin_data
+#training_data = absolute_training_data()
+
+#print training_data
+
+
+
+network = train_feed_forward([1,10,10,1], training_data)
+print network
+
+result = apply_network(network, 0)
+
 
 print "result", result
 
