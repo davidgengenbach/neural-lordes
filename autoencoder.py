@@ -4,9 +4,13 @@ import json
 from activation_functions import ActivationFunctions
 from ffnet import ffnet
 
-ALPHA = 0.05
+LEARN_RATE = 0.05
+
 INIT_AND_SAVE_WEIGHTS = False
-LAYERS = [100, 100, 1, 50]
+# Only used when INIT_AND_SAVE_WEIGHTS is True
+# inpsize, outpsize, hiddenlayers, hiddenlayerheight
+NN_ARGUMENTS = [100, 100, 1, 50]
+
 USED_ACTIVATION = ActivationFunctions.tanh
 
 def deserialize(data):
@@ -31,7 +35,7 @@ def serialize(nn):
 
 def get_nn(INIT_AND_SAVE_WEIGHTS):
     if INIT_AND_SAVE_WEIGHTS:
-        arguments = LAYERS
+        arguments = NN_ARGUMENTS
         arguments.append(USED_ACTIVATION)
         autoencoder = ffnet(*arguments)
         with open('nn.json', 'w+') as file:
@@ -53,7 +57,7 @@ target_functions = [
 ]
 
 xrange=np.arange(0, 1, 0.01)
-input = [target_function(xrange) for target_function in target_functions[0:4]]
+input = [target_function(xrange) for target_function in target_functions]
 
 def plotvec(res,c = 'green'):
     plt.plot(xrange, res, color=c)
@@ -66,7 +70,7 @@ for cycle in range(100):
 
         plotvec(out,'green')
 
-        autoencoder.learn(inp, ALPHA)
+        autoencoder.learn(inp, LEARN_RATE)
         for p in range(len(autoencoder.layers[1])):
             for w in range(len(autoencoder.layers[1][p].weights)):
                 autoencoder.layers[1][p].weights[w]=autoencoder.layers[0][w].weights[p]
