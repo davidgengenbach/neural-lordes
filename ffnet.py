@@ -4,6 +4,7 @@ class ffnet:
     def __init__(self, inpsize,outpsize,hiddenlayers,hiddenlayerheight, activation_function):
         self.arguments = [inpsize,outpsize,hiddenlayers,hiddenlayerheight]
         self.layers = []
+        self.input_size = inpsize
         #input layer
         #self.layers.append([Perceptron(1,True) for x in range(inpsize)])
         nextinpsize=inpsize

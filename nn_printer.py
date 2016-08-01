@@ -16,7 +16,10 @@ def get_graph_data(nn):
     edges = []
     nodes = []
     pos = {}
-    for layer_index, layer in enumerate(nn.layers):
+
+    input_layer = range(nn.input_size)
+    layers = [input_layer] + nn.layers
+    for layer_index, layer in enumerate(layers):
         x = layer_index
         layer_len = len(layer)
         for perceptron_index, perceptron in enumerate(layer):
@@ -24,8 +27,8 @@ def get_graph_data(nn):
             name = '{},{}'.format(layer_index, perceptron_index)
             nodes.append(name)
             pos[name]= [x, y / float(layer_len - 1)]
-            if layer_index != len(nn.layers) - 1:
-                for next_perceptron_index, next_layer_perceptron in enumerate(nn.layers[layer_index + 1]):
+            if layer_index != len(layers) - 1:
+                for next_perceptron_index, next_layer_perceptron in enumerate(layers[layer_index + 1]):
                     next_name = '{},{}'.format(layer_index + 1, next_perceptron_index)
                     weight = next_layer_perceptron.weights[perceptron_index]
                     edges.append({'from': name, 'to': next_name, 'weight': weight})
@@ -52,6 +55,6 @@ def draw_graph(edges, pos, color_map = plt.cm.Blues, show = True):
         plt.show()
 
 if __name__ == '__main__':
-    args = [10, 10, 2, 3, ActivationFunctions.tanh]
+    args = [10, 10, 1, 3, ActivationFunctions.tanh]
     nn = ffnet(*args)
     draw_ffnet(nn)
