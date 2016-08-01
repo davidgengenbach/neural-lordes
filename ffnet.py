@@ -1,29 +1,30 @@
-import numpy as np
 from perceptron import Perceptron
 
 class ffnet:
-    def __init__(self, inpsize,outpsize,hiddenlayers,hiddenlayerheight):
+    def __init__(self, inpsize,outpsize,hiddenlayers,hiddenlayerheight, activation_function):
+        self.arguments = [inpsize,outpsize,hiddenlayers,hiddenlayerheight]
         self.layers = []
         #input layer
-        self.layers.append([Perceptron(1,True) for x in range(inpsize)])
+        #self.layers.append([Perceptron(1,True) for x in range(inpsize)])
         nextinpsize=inpsize
+        self.activation_function = activation_function
 
         for l in range(hiddenlayers):
             # hidden layer
-            self.layers.append([Perceptron(nextinpsize,False) for x in range(hiddenlayerheight)])
+            self.layers.append([Perceptron(nextinpsize,False, activation_function) for x in range(hiddenlayerheight)])
             nextinpsize=hiddenlayerheight
 
         # output layer
-        self.layers.append([Perceptron(nextinpsize,False) for x in range(outpsize)])
+        self.layers.append([Perceptron(nextinpsize,False, activation_function) for x in range(outpsize)])
 
-    def get_layer_output(self, layer):
-        return map(lambda x: x.output, self.layers[layer])
+    def get_layer_output(self,layer):
+        return [self.layers[layer][p].output for p in range(len(self.layers[layer]))]
 
     def propagate(self,inp):
-        for index, layer in enumerate(self.layers):
-            for per in layer:
-                per.propagate(inp)
-            inp = self.get_layer_output(index)
+        for l in range(len(self.layers)):
+            for p in range(len(self.layers[l])):
+                self.layers[l][p].propagate(inp)
+            inp=self.get_layer_output(l)
         return inp
 
     def learn(self,opimal_out,alpha):
@@ -38,4 +39,3 @@ class ffnet:
                     for p2 in range(len(self.layers[l+1])):
                         trainoutp=trainoutp+self.layers[l+1][p2].delta*self.layers[l+1][p2].weights[p]
                     perceptron.learn(None, alpha, trainoutp)
-

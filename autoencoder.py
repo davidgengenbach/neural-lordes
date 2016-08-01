@@ -1,146 +1,83 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import random
+import json
+from activation_functions import ActivationFunctions
+from ffnet import ffnet
 
-class Perceptron:
-    def __init__(self, inpsize,id):
-        self.weights = [random.uniform(-0.05, 0.05) for x in range(inpsize)]
-        self.bias=0
-        self.id=id
-        self.inactive=False
+ALPHA = 0.05
+INIT_AND_SAVE_WEIGHTS = False
+LAYERS = [100, 100, 1, 50]
+USED_ACTIVATION = ActivationFunctions.tanh
 
-    def activationfunction(self,x):
-        #return (1/(1*np.sqrt(2*np.pi))*np.exp(-0.5*np.power(x/1,2))) #gauss
-        #return 1 - np.power((np.exp(x)-np.exp(-x))/(np.exp(x)+np.exp(-x)), 2) #tanh der
-        return (np.exp(x)-np.exp(-x))/(np.exp(x)+np.exp(-x)) #tanh
+def deserialize(data):
+    arguments = data['arguments']
+    arguments.append(USED_ACTIVATION)
+    nn = ffnet(*arguments)
+    for index, layer in enumerate(data['layers']):
+        for p_index, perceptron in enumerate(nn.layers[index]):
+            perceptron.weights = layer[p_index]
+    return nn
 
-    def activationfunction_der(self,x):
-        h=0.000000001
-        return (self.activationfunction(x+h)-self.activationfunction(x))/h
+def serialize(nn):
+    serialized_nn = {'arguments': nn.arguments}
+    weights = []
+    for layer in nn.layers:
+        layer_weights = []
+        for perceptron in layer:
+            layer_weights.append(perceptron.weights)
+        weights.append(layer_weights)
+    serialized_nn['layers'] = weights
+    return serialized_nn
 
-        #return 1-np.power(self.activationfunction(x),2)
+def get_nn(INIT_AND_SAVE_WEIGHTS):
+    if INIT_AND_SAVE_WEIGHTS:
+        arguments = LAYERS
+        arguments.append(USED_ACTIVATION)
+        autoencoder = ffnet(*arguments)
+        with open('nn.json', 'w+') as file:
+            json.dump(serialize(autoencoder), file)
+    else:
+        with open('nn.json', 'r') as f:
+            data = json.load(f)
+        autoencoder = deserialize(data)
+    return autoencoder
 
-    def propagate(self,inp):
-        self.input=inp
-        self.output=self.activationfunction(np.dot(inp, self.weights)+self.bias)#
-        if self.id == True:
-            self.output=inp[0]
+autoencoder = get_nn(INIT_AND_SAVE_WEIGHTS)
 
-        if self.inactive==True:
-            self.output=0
-
-        return self.output
-
-
-    def learn(self,opimal_out,alpha,errorterm):
-        if errorterm==None:
-            errorterm = self.output-opimal_out
-        out_der = self.activationfunction_der(np.dot(self.input, self.weights)+self.bias)
-        self.delta =  out_der * errorterm
-        self.weights = self.weights - alpha*self.delta*np.transpose(self.input)
-        self.bias=self.bias-alpha*self.delta
-
-class ffnet:
-    def __init__(self, inpsize,outpsize,hiddenlayers,hiddenlayerheight):
-        self.layers = []
-        #input layer
-        #self.layers.append([Perceptron(1,True) for x in range(inpsize)])
-        nextinpsize=inpsize
-
-        for l in range(hiddenlayers):
-            # hidden layer
-            self.layers.append([Perceptron(nextinpsize,False) for x in range(hiddenlayerheight)])
-            nextinpsize=hiddenlayerheight
-
-        # output layer
-        self.layers.append([Perceptron(nextinpsize,False) for x in range(outpsize)])
-
-    def get_layer_output(self,layer):
-        return [self.layers[layer][p].output for p in range(len(self.layers[layer]))]
-
-    def propagate(self,inp):
-        for l in range(len(self.layers)):
-            for p in range(len(self.layers[l])):
-                self.layers[l][p].propagate(inp)
-            inp=self.get_layer_output(l)
-        return inp
-
-
-
-    def learn(self,opimal_out,alpha):
-        for lx in range(len(self.layers)):
-            l=len(self.layers)-lx-1
-            for p in range(len(self.layers[l])):
-                perceptron = self.layers[l][p]
-                if lx == 0:
-                    perceptron.learn(opimal_out[p], alpha, None)#
-                else:
-                    trainoutp = 0
-                    for p2 in range(len(self.layers[l+1])):
-                        trainoutp=trainoutp+self.layers[l+1][p2].delta*self.layers[l+1][p2].weights[p]
-                    perceptron.learn(None, alpha, trainoutp)
-
-
-autoencoder=ffnet(100,100,1,30)
-
-def target1(x):
-    return np.sin(x*8)*0.9
-
-def target2(x):
-    return np.tanh(x*8)*0.9
-
-def target3(x):
-    return np.tanh(-x*8)*0.9
-
-def target4(x):
-    return np.cos(x * 5) * 0.9
-
-def target5(x):
-    return x*0.1
+target_functions = [
+    lambda x: np.sin(x*8)*0.9,
+    lambda x: x*0.1,
+    lambda x: np.tanh(x*8)*0.9,
+    lambda x: np.tanh(-x*8)*0.9,
+    lambda x: np.cos(x * 5) * 0.9
+]
 
 xrange=np.arange(0, 1, 0.01)
-input=[]
-input.append(target1(xrange))
-input.append(target2(xrange))
-input.append(target3(xrange))
-input.append(target4(xrange))
-input.append(target5(xrange))
-#print xrange
+input = [target_function(xrange) for target_function in target_functions[0:4]]
 
-#print input
-
-def plotvec(res,c):
+def plotvec(res,c = 'green'):
     plt.plot(xrange, res, color=c)
 
-plotvec(input[0],'blue')
-plotvec(input[1],'blue')
-plotvec(input[2],'blue')
-plotvec(input[3],'blue')
-plotvec(input[4],'blue')
-
 for cycle in range(100):
-    for inp in range(5):
-        print cycle
-        out=np.array(autoencoder.propagate(input[inp]))
-        plotvec(out,'green')
-        autoencoder.learn(input[inp],0.05)
+    if cycle % 10 == 0:
+            print cycle
+    for inp in input:
+        out=np.array(autoencoder.propagate(inp))
 
+        plotvec(out,'green')
+
+        autoencoder.learn(inp, ALPHA)
         for p in range(len(autoencoder.layers[1])):
             for w in range(len(autoencoder.layers[1][p].weights)):
                 autoencoder.layers[1][p].weights[w]=autoencoder.layers[0][w].weights[p]
 
-
-plotvec(autoencoder.propagate(input[0]), 'red')
-plotvec(autoencoder.propagate(input[1]), 'red')
-plotvec(autoencoder.propagate(input[2]), 'red')
-plotvec(autoencoder.propagate(input[3]), 'red')
-plotvec(autoencoder.propagate(input[4]), 'red')
+for inp in input:
+    plotvec(inp,'blue')
+    plotvec(autoencoder.propagate(inp), 'red')
 
 plt.show()
 
 '''
-
-
 #in_data=(1.0)
 #out_data=(0.7)
 

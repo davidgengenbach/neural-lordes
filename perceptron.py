@@ -2,22 +2,17 @@ import numpy as np
 import random
 
 class Perceptron:
-    def __init__(self, inpsize,id):
-        self.weights = [random.uniform(-3, 3) for x in range(inpsize)]
+    def __init__(self, inpsize, id, activation_function):
+        self.weights = [random.uniform(-0.05, 0.05) for x in range(inpsize)]
         self.bias=0
         self.id=id
         self.inactive=False
-
-    def activationfunction(self,x):
-        #return (1/(1*np.sqrt(2*np.pi))*np.exp(-0.5*np.power(x/1,2))) #gauss
-        #return 1 - np.power((np.exp(x)-np.exp(-x))/(np.exp(x)+np.exp(-x)), 2) #tanh der
-        return (np.exp(x)-np.exp(-x))/(np.exp(x)+np.exp(-x)) #tanh
+        self.activationfunction = activation_function
+        self.derivation_factor = 0.000000001
 
     def activationfunction_der(self,x):
-        h=0.000000001
+        h=self.derivation_factor
         return (self.activationfunction(x+h)-self.activationfunction(x))/h
-
-        #return 1-np.power(self.activationfunction(x),2)
 
     def propagate(self,inp):
         self.input=inp
@@ -29,7 +24,6 @@ class Perceptron:
             self.output=0
 
         return self.output
-
 
     def learn(self,opimal_out,alpha,errorterm):
         if errorterm==None:

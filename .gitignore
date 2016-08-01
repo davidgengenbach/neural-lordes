@@ -1,3 +1,5 @@
 .DS_Store
 ThumbsDB
 *.pyc
+nn.txt
+nn.json
