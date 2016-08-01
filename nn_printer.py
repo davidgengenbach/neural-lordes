@@ -3,13 +3,14 @@ try:
 except:
     raise
 
+import pylab
 import networkx as nx
 from ffnet import ffnet
 from activation_functions import ActivationFunctions
 
-def draw_ffnet(nn):
+def draw_ffnet(nn, show=True):
     (nodes, edges, pos) = get_graph_data(nn)
-    draw_graph(edges, pos)
+    draw_graph(edges, pos, show=show)
 
 def get_graph_data(nn):
     edges = []
@@ -32,7 +33,7 @@ def get_graph_data(nn):
 
 # @see http://matplotlib.org/1.2.1/examples/pylab_examples/show_colormaps.html
 # @see http://matplotlib.org/users/colormaps.html
-def draw_graph(edges, pos, color_map = plt.cm.Blues):
+def draw_graph(edges, pos, color_map = plt.cm.Blues, show = True):
     DEBUG = False
     G = nx.Graph()
     key_fn = lambda x: x['weight']
@@ -47,7 +48,8 @@ def draw_graph(edges, pos, color_map = plt.cm.Blues):
     nx.draw(G,pos,node_color='#A0CBE2', edge_color=colors, weight=5, edge_cmap=color_map,with_labels=False)
     if DEBUG:
         nx.draw_networkx_edge_labels(G,pos,edge_labels=labels)
-    plt.show()
+    if show:
+        plt.show()
 
 if __name__ == '__main__':
     args = [10, 10, 2, 3, ActivationFunctions.tanh]

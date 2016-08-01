@@ -4,7 +4,8 @@ import json
 import sys
 from activation_functions import ActivationFunctions
 from ffnet import ffnet
-from nn_printer import print_ffnet
+import pylab
+from nn_printer import draw_ffnet
 
 
 LEARN_RATE = 0.05
@@ -51,10 +52,6 @@ def get_nn(INIT_AND_SAVE_WEIGHTS):
 
 autoencoder = get_nn(INIT_AND_SAVE_WEIGHTS)
 
-
-print_ffnet(autoencoder)
-sys.exit(1)
-
 target_functions = [
     lambda x: np.sin(x*8)*0.9,
     lambda x: x*0.1,
@@ -69,19 +66,25 @@ input = [target_function(xrange) for target_function in target_functions]
 def plotvec(res,c = 'green'):
     plt.plot(xrange, res, color=c)
 
+def clear_plot():
+    plt.clf()
+    plt.cla()
+pylab.show()
 for cycle in range(100):
     if cycle % 10 == 0:
             print cycle
-    for inp in input:
+    for index, inp in enumerate(input):
         out=np.array(autoencoder.propagate(inp))
-
-        plotvec(out,'green')
-
+        #plotvec(out,'green')
         autoencoder.learn(inp, LEARN_RATE)
         for p in range(len(autoencoder.layers[1])):
             for w in range(len(autoencoder.layers[1][p].weights)):
                 autoencoder.layers[1][p].weights[w]=autoencoder.layers[0][w].weights[p]
-
+        clear_plot()
+        plt.text(0, 0, 'CurrentIterartion: {}'.format(cycle * len(input) + index))
+        draw_ffnet(autoencoder, show=False)
+        pylab.draw()
+        plt.pause(0.01)
 
 for inp in input:
     plotvec(inp,'blue')
