@@ -109,7 +109,7 @@ for cycle in range(100):
 
         plt.text(0, 0, 'CurrentIteration: {}'.format(cycle * len(input) + index))
         plt.subplot(ax2)
-        draw_ffnet(autoencoder, show=False)
+        draw_ffnet(autoencoder)
         pylab.draw()
         plt.pause(0.01)
 

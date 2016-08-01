@@ -8,9 +8,10 @@ import networkx as nx
 from ffnet import ffnet
 from activation_functions import ActivationFunctions
 
-def draw_ffnet(nn, show=True):
+# You have to execute plt.show() by yourself. this just draws
+def draw_ffnet(nn):
     (nodes, edges, pos) = get_graph_data(nn)
-    draw_graph(edges, pos, show=show)
+    draw_graph(edges, pos)
 
 def get_graph_data(nn):
     edges = []
@@ -36,25 +37,25 @@ def get_graph_data(nn):
 
 # @see http://matplotlib.org/1.2.1/examples/pylab_examples/show_colormaps.html
 # @see http://matplotlib.org/users/colormaps.html
-def draw_graph(edges, pos, color_map = plt.cm.Blues, show = True):
+def draw_graph(edges, pos, color_map = plt.cm.Blues, node_color = '#A0CBE2'):
     DEBUG = False
     G = nx.Graph()
     key_fn = lambda x: x['weight']
     min_weight = min(edges, key=key_fn)['weight']
     max_weight = max(edges, key=key_fn)['weight']
     for edge in edges:
-        G.add_edge(edge['from'], edge['to'], weight = edge['weight'])
-        # Normalize
+        # Normalize the weight so it's between [0, 1]
         edge['normalized_weight'] = (edge['weight'] - min_weight) / (max_weight - min_weight)
+        G.add_edge(edge['from'], edge['to'], weight = edge['weight'], normalized_weight = edge['normalized_weight'])
+    # assigns a color relative to the weight
     colors = [int(len(edges) * x['normalized_weight']) for x in edges]
-    labels = nx.get_edge_attributes(G,'weight')
-    nx.draw(G,pos,node_color='#A0CBE2', edge_color=colors, weight=5, edge_cmap=color_map,with_labels=False)
     if DEBUG:
+        labels = nx.get_edge_attributes(G,'normalized_weight')
         nx.draw_networkx_edge_labels(G,pos,edge_labels=labels)
-    if show:
-        plt.show()
+    nx.draw(G,pos,node_color=node_color, edge_color=colors, weight=5, edge_cmap=color_map,with_labels=False)
 
 if __name__ == '__main__':
     args = [10, 10, 1, 3, ActivationFunctions.tanh]
     nn = ffnet(*args)
     draw_ffnet(nn)
+    plt.show()
