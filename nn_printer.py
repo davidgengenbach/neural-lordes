@@ -1,16 +1,15 @@
-from keras.utils.test_utils import layer_test
-
 try:
     import matplotlib.pyplot as plt
 except:
     raise
 
+import networkx as nx
+from ffnet import ffnet
 from activation_functions import ActivationFunctions
 
-import networkx as nx
-
-
-from ffnet import ffnet
+def draw_ffnet(nn):
+    (nodes, edges, pos) = get_graph_data(nn)
+    draw_graph(edges, pos)
 
 def get_graph_data(nn):
     edges = []
@@ -41,8 +40,9 @@ def draw_graph(edges, pos, color_map = plt.cm.Blues):
     max_weight = max(edges, key=key_fn)['weight']
     for edge in edges:
         G.add_edge(edge['from'], edge['to'], weight = edge['weight'])
-        edge['weight'] = (edge['weight'] - min_weight) / (max_weight - min_weight)
-    colors = [int(len(edges) * x['weight']) for x in edges]
+        # Normalize
+        edge['normalized_weight'] = (edge['weight'] - min_weight) / (max_weight - min_weight)
+    colors = [int(len(edges) * x['normalized_weight']) for x in edges]
     labels = nx.get_edge_attributes(G,'weight')
     nx.draw(G,pos,node_color='#A0CBE2', edge_color=colors, weight=5, edge_cmap=color_map,with_labels=False)
     if DEBUG:
@@ -50,7 +50,6 @@ def draw_graph(edges, pos, color_map = plt.cm.Blues):
     plt.show()
 
 if __name__ == '__main__':
-    args = [10, 10, 1, 3, ActivationFunctions.tanh]
+    args = [10, 10, 2, 3, ActivationFunctions.tanh]
     nn = ffnet(*args)
-    (nodes, edges, pos) = get_graph_data(nn)
-    draw_graph(edges, pos)
+    draw_ffnet(nn)
