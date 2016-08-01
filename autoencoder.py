@@ -10,11 +10,22 @@ import matplotlib.gridspec as gridspec
 
 LEARN_RATE = 0.02
 
+NN_FILE = 'nn.json'
+
+# TODO: ...
+factor = 0.02
+xrange=np.arange(0, 1, factor)
+INPUT_LAYER_SIZE = int(1 / factor)
+
+if INPUT_LAYER_SIZE != len(xrange):
+    print ":("
+    sys.exit(1)
+
 INIT_AND_SAVE_WEIGHTS = True
 # Parameters for the ffnet
 # Only used when INIT_AND_SAVE_WEIGHTS is True
 # inpsize, outpsize, hiddenlayers, hiddenlayerheight
-NN_ARGUMENTS = [100, 100, 1, 30]
+NN_ARGUMENTS = [INPUT_LAYER_SIZE, INPUT_LAYER_SIZE, 1, 30]
 
 USED_ACTIVATION = ActivationFunctions.tanh
 
@@ -43,10 +54,10 @@ def get_nn(INIT_AND_SAVE_WEIGHTS):
         arguments = NN_ARGUMENTS
         arguments.append(USED_ACTIVATION)
         autoencoder = ffnet(*arguments)
-        with open('nn.json', 'w+') as file:
+        with open(NN_FILE, 'w+') as file:
             json.dump(serialize(autoencoder), file)
     else:
-        with open('nn.json', 'r') as f:
+        with open(NN_FILE, 'r') as f:
             data = json.load(f)
         autoencoder = deserialize(data)
     return autoencoder
@@ -61,7 +72,6 @@ target_functions = [
     lambda x: np.cos(x * 5) * 0.9
 ]
 
-xrange=np.arange(0, 1, 0.01)
 input = [target_function(xrange) for target_function in target_functions]
 
 def plotvec(res,c = 'green'):
@@ -73,13 +83,13 @@ def clear_plot():
 
 pylab.show()
 
-gs = gridspec.GridSpec(2, 1, width_ratios=[1], height_ratios=[1,1] )
+gs = gridspec.GridSpec(2, 1, width_ratios=[1], height_ratios=[2,1] )
 ax1 = plt.subplot(gs[0])
 ax2 = plt.subplot(gs[1])
 
 for cycle in range(100):
-    if cycle % 10 == 0:
-            print cycle
+    #if cycle % 10 == 0:
+    #        print cycle
     for index, inp in enumerate(input):
         out = np.array(autoencoder.propagate(inp))
 
@@ -103,6 +113,7 @@ for cycle in range(100):
         pylab.draw()
         plt.pause(0.01)
 
+# If you're patient enough...
 for inp in input:
     plotvec(inp,'blue')
     plotvec(autoencoder.propagate(inp), 'red')
