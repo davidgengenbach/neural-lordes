@@ -1,15 +1,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import json
+import sys
 from activation_functions import ActivationFunctions
 from ffnet import ffnet
+from nn_printer import print_ffnet
+
 
 LEARN_RATE = 0.05
 
-INIT_AND_SAVE_WEIGHTS = False
+INIT_AND_SAVE_WEIGHTS = True
 # Only used when INIT_AND_SAVE_WEIGHTS is True
 # inpsize, outpsize, hiddenlayers, hiddenlayerheight
-NN_ARGUMENTS = [100, 100, 1, 50]
+NN_ARGUMENTS = [100, 100, 1, 30]
 
 USED_ACTIVATION = ActivationFunctions.tanh
 
@@ -48,6 +51,10 @@ def get_nn(INIT_AND_SAVE_WEIGHTS):
 
 autoencoder = get_nn(INIT_AND_SAVE_WEIGHTS)
 
+
+print_ffnet(autoencoder)
+sys.exit(1)
+
 target_functions = [
     lambda x: np.sin(x*8)*0.9,
     lambda x: x*0.1,
@@ -74,6 +81,7 @@ for cycle in range(100):
         for p in range(len(autoencoder.layers[1])):
             for w in range(len(autoencoder.layers[1][p].weights)):
                 autoencoder.layers[1][p].weights[w]=autoencoder.layers[0][w].weights[p]
+
 
 for inp in input:
     plotvec(inp,'blue')
