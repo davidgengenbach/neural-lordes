@@ -1,65 +1,45 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import json
 import sys
+import pylab
+import ffnet_utils
+import matplotlib.gridspec as gridspec
+import numpy as np
+import matplotlib.pyplot as plt
 from activation_functions import ActivationFunctions
 from ffnet import ffnet
-import pylab
-from nn_printer import draw_ffnet
-import matplotlib.gridspec as gridspec
 
-LEARN_RATE = 0.02
-
+LEARN_RATE = 0.05
 NN_FILE = 'nn.json'
 
 # TODO: ...
 factor = 0.02
-xrange=np.arange(0, 1, factor)
+xrange = np.arange(0, 1, factor)
 INPUT_LAYER_SIZE = int(1 / factor)
+CYCLE_COUNT = 100
 
 if INPUT_LAYER_SIZE != len(xrange):
-    print ":("
+    print "Not a valid factor - (1 / factor) should be a whole number"
     sys.exit(1)
 
 INIT_AND_SAVE_WEIGHTS = True
 # Parameters for the ffnet
 # Only used when INIT_AND_SAVE_WEIGHTS is True
-# inpsize, outpsize, hiddenlayers, hiddenlayerheight
-NN_ARGUMENTS = [INPUT_LAYER_SIZE, INPUT_LAYER_SIZE, 1, 30]
-
+# array of layer sizes
+NN_ARGUMENTS = [[INPUT_LAYER_SIZE, 30, INPUT_LAYER_SIZE]]
 USED_ACTIVATION = ActivationFunctions.tanh
 
-def deserialize(data):
-    arguments = data['arguments']
-    arguments.append(USED_ACTIVATION)
-    nn = ffnet(*arguments)
-    for index, layer in enumerate(data['layers']):
-        for p_index, perceptron in enumerate(nn.layers[index]):
-            perceptron.weights = layer[p_index]
-    return nn
 
-def serialize(nn):
-    serialized_nn = {'arguments': nn.arguments}
-    weights = []
-    for layer in nn.layers:
-        layer_weights = []
-        for perceptron in layer:
-            layer_weights.append(perceptron.weights)
-        weights.append(layer_weights)
-    serialized_nn['layers'] = weights
-    return serialized_nn
-
-def get_nn(INIT_AND_SAVE_WEIGHTS):
-    if INIT_AND_SAVE_WEIGHTS:
+def get_nn(init_and_save_weights):
+    if init_and_save_weights:
         arguments = NN_ARGUMENTS
         arguments.append(USED_ACTIVATION)
         autoencoder = ffnet(*arguments)
         with open(NN_FILE, 'w+') as file:
-            json.dump(serialize(autoencoder), file)
+            json.dump(ffnet_utils.serialize(autoencoder), file)
     else:
-        with open(NN_FILE, 'r') as f:
-            data = json.load(f)
-        autoencoder = deserialize(data)
+        with open(NN_FILE, 'r') as file:
+            data = json.load(file)
+        autoencoder = ffnet_utils.deserialize(data, USED_ACTIVATION)
     return autoencoder
 
 autoencoder = get_nn(INIT_AND_SAVE_WEIGHTS)
@@ -74,48 +54,54 @@ target_functions = [
 
 input = [target_function(xrange) for target_function in target_functions]
 
-def plotvec(res,c = 'green'):
+
+def plotvec(res, c='green'):
     plt.plot(xrange, res, color=c)
+
 
 def clear_plot():
     plt.clf()
     plt.cla()
 
 pylab.show()
+gs = gridspec.GridSpec(3, 1, width_ratios=[1], height_ratios=[1, 5, 5])
+subplot_top = plt.subplot(gs[0])
+subplot_middle = plt.subplot(gs[1])
+subplot_bottom = plt.subplot(gs[2])
 
-gs = gridspec.GridSpec(2, 1, width_ratios=[1], height_ratios=[2,1] )
-ax1 = plt.subplot(gs[0])
-ax2 = plt.subplot(gs[1])
 
-for cycle in range(100):
-    #if cycle % 10 == 0:
-    #        print cycle
+for cycle in range(CYCLE_COUNT):
     for index, inp in enumerate(input):
         out = np.array(autoencoder.propagate(inp))
 
         autoencoder.learn(inp, LEARN_RATE)
 
-        for p in range(len(autoencoder.layers[1])):
-            for w in range(len(autoencoder.layers[1][p].weights)):
-                autoencoder.layers[1][p].weights[w]=autoencoder.layers[0][w].weights[p]
+        # Copy weights from second layer to first layer
+        for p, second_layer_perceptron in enumerate(autoencoder.layers[1]):
+            for w, weight in enumerate(second_layer_perceptron.weights):
+                second_layer_perceptron.weights[w] = autoencoder.layers[0][w].weights[p]
 
         clear_plot()
-        plt.subplot(ax1)
+        plt.subplot(subplot_top)
+        plt.axis('off')
+        plt.text(0, 0, 'CurrentIteration: {}'.format(cycle * len(input) + index))
+
+        plt.subplot(subplot_middle)
+        plotvec(out, 'green')
         for inp in input:
-            plotvec(inp,'blue')
+            plotvec(inp, 'blue')
             plotvec(autoencoder.propagate(inp), 'red')
 
-        plotvec(out,'green')
+        plt.subplot(subplot_bottom)
+        ffnet_utils.draw_ffnet(autoencoder)
 
-        plt.text(0, 0, 'CurrentIteration: {}'.format(cycle * len(input) + index))
-        plt.subplot(ax2)
-        draw_ffnet(autoencoder)
         pylab.draw()
         plt.pause(0.01)
 
+
 # If you're patient enough...
 for inp in input:
-    plotvec(inp,'blue')
+    plotvec(inp, 'blue')
     plotvec(autoencoder.propagate(inp), 'red')
 
 '''
