@@ -28,14 +28,15 @@ INIT_AND_SAVE_WEIGHTS = True
 NN_ARGUMENTS = [[INPUT_LAYER_SIZE, 30, INPUT_LAYER_SIZE]]
 USED_ACTIVATION = ActivationFunctions.tanh
 
-
 def get_nn(init_and_save_weights):
+    # Create a new NN and save it to a json
     if init_and_save_weights:
         arguments = NN_ARGUMENTS
         arguments.append(USED_ACTIVATION)
         autoencoder = ffnet(*arguments)
         with open(NN_FILE, 'w+') as file:
             json.dump(ffnet_utils.serialize(autoencoder), file)
+    # Load the NN weights from the json
     else:
         with open(NN_FILE, 'r') as file:
             data = json.load(file)
@@ -97,12 +98,6 @@ for cycle in range(CYCLE_COUNT):
 
         pylab.draw()
         plt.pause(0.01)
-
-
-# If you're patient enough...
-for inp in input:
-    plotvec(inp, 'blue')
-    plotvec(autoencoder.propagate(inp), 'red')
 
 '''
 #in_data=(1.0)

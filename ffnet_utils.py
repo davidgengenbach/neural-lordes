@@ -8,10 +8,9 @@ import networkx as nx
 from ffnet import ffnet
 from activation_functions import ActivationFunctions
 
-# You have to execute plt.show() by yourself. this just draws
-
 
 def draw_ffnet(nn):
+    '''You have to execute plt.show() by yourself. this just draws'''
     (nodes, edges, pos) = get_graph_data(nn)
     draw_graph(edges, pos)
 
@@ -38,11 +37,10 @@ def get_graph_data(nn):
                     edges.append({'from': name, 'to': next_name, 'weight': weight})
     return (nodes, edges, pos)
 
-# @see http://matplotlib.org/1.2.1/examples/pylab_examples/show_colormaps.html
-# @see http://matplotlib.org/users/colormaps.html
-
 
 def draw_graph(edges, pos, color_map=plt.cm.Blues, node_color='#A0CBE2'):
+    # @see http://matplotlib.org/1.2.1/examples/pylab_examples/show_colormaps.html
+    # @see http://matplotlib.org/users/colormaps.html
     DEBUG = False
     G = nx.Graph()
     key_fn = lambda x: x['weight']
@@ -57,11 +55,14 @@ def draw_graph(edges, pos, color_map=plt.cm.Blues, node_color='#A0CBE2'):
     if DEBUG:
         labels = nx.get_edge_attributes(G, 'normalized_weight')
         nx.draw_networkx_edge_labels(G, pos, edge_labels=labels)
-    nx.draw(G, pos, node_color=node_color, node_size=6, edge_color=colors, weight=3, edge_cmap=color_map, with_labels=False)
+    nx.draw(G, pos, node_color=node_color, node_size=6, edge_color=colors,
+            weight=3, edge_cmap=color_map, with_labels=False)
 
 
-def deserialize(data, used_activation):
+def deserialize(data, used_activation = None):
     arguments = data['arguments']
+    if used_activation is None:
+        used_activation = getattr(ActivationFunctions, data['activation_function'])
     arguments.append(used_activation)
     nn = ffnet(*arguments)
     for index, layer in enumerate(data['layers']):
@@ -79,6 +80,7 @@ def serialize(nn):
             layer_weights.append(perceptron.weights)
         weights.append(layer_weights)
     serialized_nn['layers'] = weights
+    serialized_nn['activation_function'] = nn.activation_function.__name__
     return serialized_nn
 
 if __name__ == '__main__':
