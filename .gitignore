@@ -3,3 +3,4 @@ ThumbsDB
 *.pyc
 nn.txt
 nn.json
+MNIST_data
