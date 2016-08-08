@@ -12,10 +12,11 @@ LEARN_RATE = 0.05
 NN_FILE = 'nn.json'
 
 # TODO: ...
-factor = 0.02
+factor = 0.1
 xrange = np.arange(0, 1, factor)
 INPUT_LAYER_SIZE = int(1 / factor)
-CYCLE_COUNT = 100
+print INPUT_LAYER_SIZE
+CYCLE_COUNT = 10
 
 if INPUT_LAYER_SIZE != len(xrange):
     print "Not a valid factor - (1 / factor) should be a whole number"
@@ -25,7 +26,7 @@ INIT_AND_SAVE_WEIGHTS = True
 # Parameters for the ffnet
 # Only used when INIT_AND_SAVE_WEIGHTS is True
 # array of layer sizes
-NN_ARGUMENTS = [[INPUT_LAYER_SIZE, 30, INPUT_LAYER_SIZE]]
+NN_ARGUMENTS = [[INPUT_LAYER_SIZE, 10, INPUT_LAYER_SIZE]]
 USED_ACTIVATION = ActivationFunctions.tanh
 
 def get_nn(init_and_save_weights):
@@ -97,7 +98,7 @@ for cycle in range(CYCLE_COUNT):
         ffnet_utils.draw_ffnet(autoencoder)
 
         pylab.draw()
-        plt.pause(0.01)
+        plt.pause(0.5)
 
 '''
 #in_data=(1.0)
