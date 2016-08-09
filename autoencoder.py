@@ -1,131 +1,106 @@
+import json
+import sys
+import pylab
+import ffnet_utils
+import matplotlib.gridspec as gridspec
 import numpy as np
 import matplotlib.pyplot as plt
-import random
+from activation_functions import ActivationFunctions
+from ffnet import ffnet
 
-class Perceptron:
-    def __init__(self, inpsize,id):
-        self.weights = [random.uniform(-0.05, 0.05) for x in range(inpsize)]
-        self.bias=0
-        self.id=id
-        self.inactive=False
+LEARN_RATE = 0.05
+NN_FILE = 'nn.json'
 
-    def activationfunction(self,x):
-        #return (1/(1*np.sqrt(2*np.pi))*np.exp(-0.5*np.power(x/1,2))) #gauss
-        #return 1 - np.power((np.exp(x)-np.exp(-x))/(np.exp(x)+np.exp(-x)), 2) #tanh der
-        return (np.exp(x)-np.exp(-x))/(np.exp(x)+np.exp(-x)) #tanh
+# TODO: ...
+factor = 0.1
+xrange = np.arange(0, 1, factor)
+INPUT_LAYER_SIZE = int(1 / factor)
+print INPUT_LAYER_SIZE
+CYCLE_COUNT = 10
 
-    def activationfunction_der(self,x):
-        h=0.000000001
-        return (self.activationfunction(x+h)-self.activationfunction(x))/h
+if INPUT_LAYER_SIZE != len(xrange):
+    print "Not a valid factor - (1 / factor) should be a whole number"
+    sys.exit(1)
 
-        #return 1-np.power(self.activationfunction(x),2)
+INIT_AND_SAVE_WEIGHTS = True
+# Parameters for the ffnet
+# Only used when INIT_AND_SAVE_WEIGHTS is True
+# array of layer sizes
+NN_ARGUMENTS = [[INPUT_LAYER_SIZE, 10, INPUT_LAYER_SIZE]]
+USED_ACTIVATION = ActivationFunctions.tanh
 
-    def propagate(self,inp):
-        self.input=inp
-        self.output=self.activationfunction(np.dot(inp, self.weights)+self.bias)#
-        if self.id == True:
-            self.output=inp[0]
+def get_nn(init_and_save_weights):
+    # Create a new NN and save it to a json
+    if init_and_save_weights:
+        arguments = NN_ARGUMENTS
+        arguments.append(USED_ACTIVATION)
+        autoencoder = ffnet(*arguments)
+        with open(NN_FILE, 'w+') as file:
+            json.dump(ffnet_utils.serialize(autoencoder), file)
+    # Load the NN weights from the json
+    else:
+        with open(NN_FILE, 'r') as file:
+            data = json.load(file)
+        autoencoder = ffnet_utils.deserialize(data, USED_ACTIVATION)
+    return autoencoder
 
-        if self.inactive==True:
-            self.output=0
+autoencoder = get_nn(INIT_AND_SAVE_WEIGHTS)
 
-        return self.output
+target_functions = [
+    lambda x: np.sin(x*8)*0.9,
+    lambda x: x*0.1,
+    lambda x: np.tanh(x*8)*0.9,
+    lambda x: np.tanh(-x*8)*0.9,
+    lambda x: np.cos(x * 5) * 0.9
+]
 
-
-    def learn(self,opimal_out,alpha,errorterm):
-        if errorterm==None:
-            errorterm = self.output-opimal_out
-        out_der = self.activationfunction_der(np.dot(self.input, self.weights)+self.bias)
-        self.delta =  out_der * errorterm
-        self.weights = self.weights - alpha*self.delta*np.transpose(self.input)
-        self.bias=self.bias-alpha*self.delta
-
-class ffnet:
-    def __init__(self, inpsize,outpsize,hiddenlayers,hiddenlayerheight):
-        self.layers = []
-        #input layer
-        #self.layers.append([Perceptron(1,True) for x in range(inpsize)])
-        nextinpsize=inpsize
-
-        for l in range(hiddenlayers):
-            # hidden layer
-            self.layers.append([Perceptron(nextinpsize,False) for x in range(hiddenlayerheight)])
-            nextinpsize=hiddenlayerheight
-
-        # output layer
-        self.layers.append([Perceptron(nextinpsize,False) for x in range(outpsize)])
-
-    def get_layer_output(self,layer):
-        return [self.layers[layer][p].output for p in range(len(self.layers[layer]))]
-
-    def propagate(self,inp):
-        for l in range(len(self.layers)):
-            for p in range(len(self.layers[l])):
-                self.layers[l][p].propagate(inp)
-            inp=self.get_layer_output(l)
-        return inp
+input = [target_function(xrange) for target_function in target_functions]
 
 
-
-    def learn(self,opimal_out,alpha):
-        for lx in range(len(self.layers)):
-            l=len(self.layers)-lx-1
-            for p in range(len(self.layers[l])):
-                perceptron = self.layers[l][p]
-                if lx == 0:
-                    perceptron.learn(opimal_out[p], alpha, None)#
-                else:
-                    trainoutp = 0
-                    for p2 in range(len(self.layers[l+1])):
-                        trainoutp=trainoutp+self.layers[l+1][p2].delta*self.layers[l+1][p2].weights[p]
-                    perceptron.learn(None, alpha, trainoutp)
-
-
-autoencoder=ffnet(100,100,1,30)
-
-def target1(x):
-    #return np.power(x,1.1)
-    return np.sin(x*8)*0.9
-
-def target2(x):
-    #return np.power(x,1.1)
-    return np.tanh(x*8)*0.9
-
-xrange=np.arange(0, 1, 0.01)
-input=[]
-input.append(target1(xrange))
-input.append(target2(xrange))
-#print xrange
-
-#print input
-
-def plotvec(res,c):
+def plotvec(res, c='green'):
     plt.plot(xrange, res, color=c)
 
-plotvec(input[0],'blue')
-plotvec(input[1],'blue')
 
-for cycle in range(100):
-    for inp in range(2):
-        print cycle
-        out=np.array(autoencoder.propagate(input[inp]))
-        plotvec(out,'green')
-        autoencoder.learn(input[inp],0.05)
+def clear_plot():
+    plt.clf()
+    plt.cla()
 
-        for p in range(len(autoencoder.layers[1])):
-            for w in range(len(autoencoder.layers[1][p].weights)):
-                autoencoder.layers[1][p].weights[w]=autoencoder.layers[0][w].weights[p]
+pylab.show()
+gs = gridspec.GridSpec(3, 1, width_ratios=[1], height_ratios=[1, 5, 5])
+subplot_top = plt.subplot(gs[0])
+subplot_middle = plt.subplot(gs[1])
+subplot_bottom = plt.subplot(gs[2])
 
 
-plotvec(autoencoder.propagate(input[0]), 'red')
-plotvec(autoencoder.propagate(input[1]), 'red')
+for cycle in range(CYCLE_COUNT):
+    for index, inp in enumerate(input):
+        out = np.array(autoencoder.propagate(inp))
 
+        autoencoder.learn(inp, LEARN_RATE)
 
-plt.show()
+        # Copy weights from second layer to first layer
+        for p, second_layer_perceptron in enumerate(autoencoder.layers[1]):
+            for w, weight in enumerate(second_layer_perceptron.weights):
+                second_layer_perceptron.weights[w] = autoencoder.layers[0][w].weights[p]
+
+        clear_plot()
+        plt.subplot(subplot_top)
+        plt.axis('off')
+        plt.text(0, 0, 'CurrentIteration: {}'.format(cycle * len(input) + index))
+
+        plt.subplot(subplot_middle)
+        plotvec(out, 'green')
+        for inp in input:
+            plotvec(inp, 'blue')
+            plotvec(autoencoder.propagate(inp), 'red')
+
+        plt.subplot(subplot_bottom)
+        ffnet_utils.draw_ffnet(autoencoder)
+
+        pylab.draw()
+        plt.pause(0.5)
 
 '''
-
-
 #in_data=(1.0)
 #out_data=(0.7)
 

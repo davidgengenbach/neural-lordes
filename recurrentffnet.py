@@ -1,45 +1,33 @@
 from perceptron import Perceptron
+import numpy as np
 
-class ffnet:
+weightrange=0.8
+
+class recurrentffnet:
 
     def __init__(self, layers, activation_function):
         self.arguments = [layers]
         self.layers = []
         self.input_size = layers[0]
-        # input layer
-        #self.layers.append([Perceptron(1,True) for x in range(inpsize)])
+
         nextinpsize = self.input_size
         self.activation_function = activation_function
 
         for layer in layers[1:-1]:
-            self.layers.append([Perceptron(nextinpsize, False, activation_function) for x in range(layer)])
+            self.layers.append([Perceptron(nextinpsize+layer, False, activation_function,random_from=-weightrange, random_to=weightrange) for x in range(layer)])
             nextinpsize = layer
 
         # output layer
-        self.layers.append([Perceptron(nextinpsize, False, activation_function) for x in range(layers[-1])])
+        self.layers.append([Perceptron(nextinpsize, False, activation_function,random_from=-weightrange, random_to=weightrange) for x in range(layers[-1])])
 
-    def __init__x(self, inpsize, outpsize, hiddenlayers, hiddenlayerheight, activation_function):
-        self.arguments = [inpsize, outpsize, hiddenlayers, hiddenlayerheight]
-        self.layers = []
-        self.input_size = inpsize
-        # input layer
-        #self.layers.append([Perceptron(1,True) for x in range(inpsize)])
-        nextinpsize = inpsize
-        self.activation_function = activation_function
-
-        for l in range(hiddenlayers):
-            # hidden layer
-            self.layers.append([Perceptron(nextinpsize, False, activation_function) for x in range(hiddenlayerheight)])
-            nextinpsize = hiddenlayerheight
-
-        # output layer
-        self.layers.append([Perceptron(nextinpsize, False, activation_function) for x in range(layers[-1])])
 
     def get_layer_output(self, layer):
         return [self.layers[layer][p].output for p in range(len(self.layers[layer]))]
 
     def propagate(self, inp):
         for l in range(len(self.layers)):
+            if l!=len(self.layers)-1:
+                inp = np.concatenate((inp, self.get_layer_output(l)))
             for p in range(len(self.layers[l])):
                 self.layers[l][p].propagate(inp)
             inp = self.get_layer_output(l)
@@ -58,8 +46,4 @@ class ffnet:
                         trainoutp = trainoutp+self.layers[l+1][p2].delta*self.layers[l+1][p2].weights[p]
                     perceptron.learn(None, alpha, trainoutp)
 
-if __name__ == '__main__':
-    from activation_functions import ActivationFunctions
-    args = [[10, 1, 10], ActivationFunctions.tanh]
-    nn = ffnet(*args)
-    print nn
+
