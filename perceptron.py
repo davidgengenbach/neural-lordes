@@ -11,6 +11,7 @@ class Perceptron:
         self.inactive = False
         self.activationfunction = activation_function
         self.derivation_factor = 0.000000001
+        self.output=0
 
     def activationfunction_der(self, x):
         h = self.derivation_factor
@@ -18,6 +19,7 @@ class Perceptron:
 
     def propagate(self, inp):
         self.input = inp
+
         self.output = self.activationfunction(
             np.dot(inp, self.weights)+self.bias)
         if self.id == True:
