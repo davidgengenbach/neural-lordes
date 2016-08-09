@@ -22,7 +22,7 @@ def error_fn2(weights, deltas):
 	return np.dot(weights, deltas)
 
 def learn_fn(derivative_activation_fn, deltas, input_data, weights):
-	alpha = 0.1
+	alpha = 0.05
 	#return np.outer(deltas, input_data)
 	return weights - alpha * np.outer(input_data, deltas)
 
@@ -42,6 +42,13 @@ def init_feed_forward(layer_list):
 def train_feed_forward(weight_list, training_data):
 	act_fn = np.tanh
 	act_fn_derived = sech
+
+	
+
+	act_fn = lambda x: np.piecewise(x, [x < 0, x >= 0], [lambda x: np.exp(x) - 1, lambda x: x])
+	act_fn_derived = lambda x: np.piecewise(x, [x < 0, x >= 0], [lambda x: np.exp(x), lambda x: 1])
+
+	
 
 	for i in range(len(training_data)):
 
@@ -120,7 +127,7 @@ def renormalize_data(data, factors):
 
 
 # sinusoidal training data
-rangex1 = np.arange(-6, 6, 0.1)
+rangex1 = np.arange(-4, 4, 0.1)
 rangex = random.sample(rangex1, len(rangex1))
 sin_data = np.array([[[x], np.sin(x)] for x in rangex ])
 	
@@ -139,11 +146,12 @@ print training_data
 
 
 
-start_weights = init_feed_forward([1,10,10,1])
-network = train_feed_forward(start_weights, training_data);
+start_weights = init_feed_forward([1,80,1])
+network = train_feed_forward(start_weights, training_data)
 
 for x in range(1000):
-	network = train_feed_forward(network, training_data);	
+	#training_data2 = random.sample(training_data)
+	network = train_feed_forward(network, training_data)
 
 #print network
 
