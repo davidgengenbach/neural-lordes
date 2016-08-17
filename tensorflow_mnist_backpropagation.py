@@ -1,16 +1,28 @@
 from tensorflow.examples.tutorials.mnist import input_data
 import tensorflow as tf
+import math
 
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
 
+IMAGE_PIXELS = 784
+
+HIDDEN_SIZE = 300
+
 inputVector = tf.placeholder(tf.float32, [None, 784])
-W = tf.Variable(tf.zeros([784, 10]))
+W_1 = tf.Variable(tf.truncated_normal([IMAGE_PIXELS, HIDDEN_SIZE],
+                            stddev=1.0 / math.sqrt(float(IMAGE_PIXELS))))
+b1 = tf.Variable(tf.zeros([HIDDEN_SIZE]))
+hiddenLayer = tf.nn.relu(tf.matmul(inputVector, W_1)+b1) #activation function
+W_2 = tf.Variable(tf.truncated_normal([HIDDEN_SIZE, 10],
+                            stddev=1.0 / math.sqrt(float(HIDDEN_SIZE))))
 b = tf.Variable(tf.zeros([10]))
-y = tf.nn.softmax(tf.matmul(inputVector, W) + b)
+y = tf.nn.softmax(tf.matmul(hiddenLayer, W_2) + b)
 y_ = tf.placeholder(tf.float32, [None, 10])
 cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
 train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
+#cross_entropy_hidden = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(hiddenLayer), reduction_indices=[1]))
 init = tf.initialize_all_variables()
+tf.scalar_summary(cross_entropy.op.name, cross_entropy)
 sess = tf.Session()
 sess.run(init)
 for i in range(1000):
