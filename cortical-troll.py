@@ -1,96 +1,132 @@
-import numpy as np
-import random
+#import numpy as np
+import random, math
 
 
-class connection:
-	def __init__(self, target):
-		self.target_index = target
-		self.strength = 0.5
-		self.was_also_firing_at_activation = False
 
 
-class perceptron:
-	def __init__(self, neighborhood):
-		self.action_level = 0.5
-		self.activation_threshold = 0.8
+class output_connectron:
+	def __init__(self):
+		self.mean = 0
+		self.threshold = 0.1
+		self.input_weights = []
 
-		self.desired_fire_rate = 0.5
-		self.current_fire_rate = 0
+	def activate(self, inputs, supervision):
+		self.mean = supervision
 
-		self.connections = [connection(i) for i in range(len(neighborhood))]
-		self.is_firing = False
+		while(len(inputs) > len(self.input_weights)):
+			self.input_weights.append(random.randint(1,100)/100)
 
-		self.neighborhood = neighborhood
-		self.index = len(neighborhood)
-
-		neighborhood.append(self)
-
-	def decay_action(self):
-		self.action_level = self.action_level * 0.9
-
-	def receive_action(self, level):
-		print "level", level
-		self.action_level += level
-			
-
-	def check_fire(self):
-		if self.action_level > self.activation_threshold:
-			self.is_firing = True
-			for i in self.connections:		
-				i.was_also_firing_at_activation = self.neighborhood[i.target_index].is_firing
-		else:
-			self.is_firing = False
-
-	def fire(self):
-		for i in self.connections:
-			self.neighborhood[i.target_index].receive_action(i.strength)
-			if i.was_also_firing_at_activation:
-				i.strength = i.strength * 0.9 #reduce connection strength, if other has fired before 
-			else:
-				i.strength = i.strength * 1.1 #otherwise increase
-
-	def update(self):
-		self.decay_action()
-		self.check_fire()
-
-		if self.is_firing:
-			self.fire(self.neighborhood)
-
-
+		input_sum = 0
+		for i, value in enumerate(inputs):
+			input_sum += value*self.input_weights[i]
+		input_mean = input_sum / len(inputs)
 		
-neighborshit = []
+		if(input_sum < self.threshold):
+			return 0	
 
-penis = perceptron(neighborshit)
-penor = perceptron(neighborshit)
+		diff = abs(input_sum) - abs(self.mean)
 
-print penor.index
-print penor.connections
+		if(diff > 0):
+			for i, val in enumerate(inputs):
+				if(abs(val*self.input_weights[i]) > abs(input_mean)):
+					self.input_weights[i] -= 0.02 * math.copysign(1, self.input_weights[i])
+				else:
+					self.input_weights[i] *= 0.99
+		else:
+			for i, val in enumerate(inputs):
+				if(abs(val*self.input_weights[i]) > abs(input_mean)):
+					self.input_weights[i] += 0.02 * math.copysign(1, self.input_weights[i])
+				else:
+					self.input_weights[i] *= 0.99
 
-print penor.action_level
-print penis.action_level
-
-penis.update()
-penor.update()
-
-print penor.action_level
-print penis.action_level
-
-penor.fire()
-
-print penor.action_level
-print penis.action_level
-
-penor.fire()
-
-print penor.action_level
-print penis.action_level
+		return input_sum
 
 
 
+class connectron:
+	def __init__(self):
+		self.mean = 0
+		self.threshold = 0.1
 
+		self.input_weights = []
 
+	def activate(self, inputs):
+		#if(len(self.input_weights) < 1):
+		#	self.input_weights = [0.02, 0.71]
 
+		while(len(inputs) > len(self.input_weights)):
+			self.input_weights.append(random.randint(20,100)/100)
 
+		#weight_mean = 0
+		#for i in self.input_weights:
+		#	weight_mean += i
+		#weight_mean /= len(self.input_weights)
 
+		input_sum = 0
+		for i, value in enumerate(inputs):
+			input_sum += value*self.input_weights[i]
+		input_mean = input_sum / len(inputs)
+		
 
-#		db/dt + b - (de/dt + (1+ev) E)
+		if(input_sum < self.threshold):
+			return 0
+
+		self.mean = 1 #comment this out if it should learn mean
+		if(self.mean < self.threshold):
+			self.mean = input_sum
+			return 0
+
+		diff = abs(input_sum) - abs(self.mean)
+		#print("diff:", diff)
+
+		if(diff > 0):
+			# overshoot case
+			#print("overshoot")
+			#self.mean *= 1.01
+
+			for i, val in enumerate(inputs):
+				if(abs(val*self.input_weights[i]) > abs(input_mean)):
+					#print(abs(i) , abs(input_mean))
+					self.input_weights[i] -= 0.02 #* math.copysign(1, self.input_weights[i])
+				else:
+					self.input_weights[i] *= 0.99
+		else:
+			# undershoot case
+			#print("undershoot")
+			#self.mean *= 0.99
+			
+			for i, val in enumerate(inputs):
+				#print(val, self.input_weights[i])
+				#print(abs(val*self.input_weights[i]), ">", abs(input_mean))
+				if(abs(val*self.input_weights[i]) > abs(input_mean)):
+					self.input_weights[i] += 0.02 #* math.copysign(1, self.input_weights[i])
+				else:
+					self.input_weights[i] *= 0.99
+
+		return input_sum
+
+def test_run(iterations):
+	a = output_connectron()	
+	b = output_connectron()	
+
+	input_vector_a = [0, 1, 0, 1]
+	input_vector_b = [1, 0, 1, 0]
+
+	for i in range(iterations):
+		rand_vector = [random.randrange(0,1), random.randrange(0,1), random.randrange(0,1), random.randrange(0,1)]
+
+		activation = b.activate(rand_vector, 0)
+		activation = a.activate(rand_vector, 0)
+		activation = b.activate(input_vector_a, 0)
+		activation = a.activate(input_vector_a, 1)
+		activation = b.activate(input_vector_b, 1)
+		activation = a.activate(input_vector_b, 0)
+		#print(activation, a.input_weights)
+
+	print(a.activate(input_vector_a, 0))
+	print(a.activate(input_vector_b, 0))
+	print(b.activate(input_vector_a, 0))
+	print(b.activate(input_vector_b, 0))
+
+test_run(1000)
+
